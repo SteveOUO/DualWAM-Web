@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="DualWAM separates long-horizon global planning from high-frequency local refinement for responsive zero-shot robot manipulation.">
+  <meta name="keywords" content="DualWAM, World Action Model, robot manipulation, global planning, local refinement">
+  <meta name="theme-color" content="#376cb1">
+  <title>DualWAM — Dual-System World Action Models</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23ffffff'/%3E%3Ccircle cx='25' cy='32' r='17' fill='none' stroke='%23376cb1' stroke-width='8'/%3E%3Ccircle cx='39' cy='32' r='17' fill='none' stroke='%23d7673b' stroke-width='8'/%3E%3C/svg%3E">
+  <link rel="preload" href="./static/fonts/DingTalk-JinBuTi.ttf" as="font" type="font/ttf" crossorigin>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <script defer src="./static/js/index.js"></script>
+</head>
+
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <nav class="site-nav" aria-label="Primary navigation">
+    <div class="nav-inner">
+      <a class="nav-brand" href="#top" aria-label="DualWAM home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+        <span>Dual<span>WAM</span></span>
+      </a>
+      <div class="nav-links">
+        <a href="#overview">Overview</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#inference-pipeline">Pipeline</a>
+        <a href="#results">Results</a>
+        <a href="#bibtex">BibTeX</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main-content">
+    <header class="hero" id="top">
+      <div class="hero-orb hero-orb-one" aria-hidden="true"></div>
+      <div class="hero-orb hero-orb-two" aria-hidden="true"></div>
+      <div class="content-shell hero-content">
+        <h1><span class="title-dual">Dual</span><span class="title-wam">WAM</span></h1>
+        <p class="hero-subtitle">Dual-System World Action Models for Asynchronous<br class="desktop-break"> Global Planning and Local Refinement</p>
+
+        <div class="authors" aria-label="Authors">
+          <span class="author"><a href="https://steveouo.github.io/" target="_blank" rel="noopener noreferrer">Yixin Zheng</a><sup>1,2,*</sup>,</span>
+          <span class="author"><a href="https://jiangranlv.github.io/" target="_blank" rel="noopener noreferrer">Jiangran Lyu</a><sup>2,3,*</sup>,</span>
+          <span class="author"><a href="https://michaeldyt.github.io/" target="_blank" rel="noopener noreferrer">Yuntian Deng</a><sup>2,4,*</sup>,</span>
+          <span class="author"><span class="author-name">Kai Liu</span><sup>1,2</sup>,</span>
+          <br>
+          <span class="author"><span class="author-name">Yizhou Zhou</span><sup>5</sup>,</span>
+          <span class="author"><span class="author-name">Yizhou Wang</span><sup>3</sup>,</span>
+          <span class="author"><span class="author-name">Xiaoguang Zhao</span><sup>1</sup>,</span>
+          <span class="author"><a href="https://hughw19.github.io/" target="_blank" rel="noopener noreferrer">He Wang</a><sup>2,3,†</sup>,</span>
+          <span class="author"><a href="https://scholar.google.com/citations?user=X7M0I8kAAAAJ&amp;hl=en" target="_blank" rel="noopener noreferrer">Zhizheng Zhang</a><sup>2,†</sup></span>
+        </div>
+
+        <div class="affiliations">
+          <span><sup>1</sup>Institute of Automation, Chinese Academy of Sciences</span>
+          <span><sup>2</sup>Galbot</span>
+          <span class="affiliation-line-break" aria-hidden="true"></span>
+          <span><sup>3</sup>Peking University</span>
+          <span><sup>4</sup>Shanghai Jiao Tong University</span>
+          <span><sup>5</sup>Individual Researcher</span>
+        </div>
+        <p class="contribution">
+          <span><sup>*</sup>Equal contribution</span>
+          <span><sup>†</sup>Co-corresponding authors</span>
+        </p>
+
+        <div class="publication-links" aria-label="Publication links">
+          <span class="pill-link is-disabled" aria-label="arXiv coming soon" title="The arXiv link will be added after release">
+            <span class="pill-icon" aria-hidden="true"><i class="ai ai-arxiv"></i></span>
+            <span>arXiv</span>
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <section class="section section-overview" id="overview">
+      <div class="wide-shell">
+        <figure class="figure-card teaser-card reveal">
+          <img src="./media/fig/teaser_dualwam.png" alt="DualWAM overview showing role-specialized System 2 global planning and System 1 local refinement" width="1920" height="851">
+          <figcaption>
+            <strong>Overview.</strong> DualWAM asynchronously coordinates a low-frequency <span class="system-two">System 2</span> for long-horizon world-action planning and a high-frequency wrist-conditioned <span class="system-one">System 1</span> for local refinement. Their role-specialized observation spaces enable learning from egocentric, robot, and UMI data. Across zero-shot tasks on Galbot G1 and Franka FR3, DualWAM improves success rate and reduces inference latency.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section section-tinted" id="architecture">
+      <div class="wide-shell">
+        <div class="section-heading reveal">
+          <p class="section-index">01 / METHOD</p>
+          <h2>Model Architecture</h2>
+        </div>
+
+        <figure class="figure-card pipeline-card reveal">
+          <img src="./media/fig/pipeline_dualwam.png" alt="DualWAM pipeline from System 2 high-noise bidirectional generation to System 1 low-noise causal refinement" width="1920" height="1080" loading="lazy">
+          <figcaption>
+            <span class="system-two">System 2</span> denoises a complete long-horizon world-action state through the high-noise interval using bidirectional attention. At threshold <em>τ</em>, temporally aligned wrist-action windows are passed to compact <span class="system-one">System 1</span>, which completes the low-noise interval using causal attention and fresh wrist observations.
+          </figcaption>
+        </figure>
+
+        <div class="section-heading inference-section-heading reveal" id="inference-pipeline">
+          <p class="section-index">02 / METHOD</p>
+          <h2 id="inference-pipeline-title">Asynchronous Inference Pipeline</h2>
+        </div>
+
+        <section class="async-flow-block reveal" aria-labelledby="inference-pipeline-title">
+          <div class="async-flow-heading">
+            <p>System 2 refreshes a global plan in the background while System 1 repeatedly denoises one temporally aligned action chunk.</p>
+            <button class="flow-toggle" type="button" data-flow-toggle aria-pressed="false">
+              <span class="flow-toggle-icon" aria-hidden="true"></span>
+              <span data-flow-toggle-label>Pause animation</span>
+            </button>
+          </div>
+
+          <div class="async-flow-card" data-async-flow role="img" aria-label="Animated DualWAM hardware inference pipeline. System 2 refreshes a 32-action global plan at 1 hertz while System 1 repeatedly denoises one temporally aligned 8-action chunk at 15 hertz. The first chunk of each new plan overlaps the final active chunk of the previous plan and is skipped before asynchronous handoff.">
+            <div class="async-flow-scroll">
+              <div class="async-flow-canvas">
+                <svg class="async-flow-svg" viewBox="0 0 1480 650" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="flow-background" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0" stop-color="#f8fbff"></stop>
+                      <stop offset="0.52" stop-color="#ffffff"></stop>
+                      <stop offset="1" stop-color="#fff9f6"></stop>
+                    </linearGradient>
+                    <linearGradient id="flow-overlap-gradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#376cb1" stop-opacity="0.11"></stop>
+                      <stop offset="0.5" stop-color="#8a7891" stop-opacity="0.2"></stop>
+                      <stop offset="1" stop-color="#d7673b" stop-opacity="0.11"></stop>
+                    </linearGradient>
+                    <linearGradient id="flow-bridge-surface" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#eaf2fc" stop-opacity="0.9"></stop>
+                      <stop offset="0.5" stop-color="#f7f4f1" stop-opacity="0.9"></stop>
+                      <stop offset="1" stop-color="#fbeee9" stop-opacity="0.9"></stop>
+                    </linearGradient>
+                    <linearGradient id="flow-bridge-border" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#376cb1"></stop>
+                      <stop offset="1" stop-color="#d7673b"></stop>
+                    </linearGradient>
+                    <filter id="flow-shadow" x="-20%" y="-20%" width="140%" height="160%">
+                      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#2f5f9d" flood-opacity="0.09"></feDropShadow>
+                    </filter>
+                    <filter id="flow-bridge-glow" x="-20%" y="-40%" width="140%" height="180%">
+                      <feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="#786f89" flood-opacity="0.16"></feDropShadow>
+                    </filter>
+                    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                      <path d="M0 0 L10 5 L0 10 Z" fill="#376cb1"></path>
+                    </marker>
+                    <marker id="arrow-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                      <path d="M0 0 L10 5 L0 10 Z" fill="#d7673b"></path>
+                    </marker>
+                    <marker id="arrow-neutral" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                      <path d="M0 0 L10 5 L0 10 Z" fill="#8a98a5"></path>
+                    </marker>
+                    <pattern id="flow-skip-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                      <rect width="6" height="6" fill="#eef1f3"></rect>
+                      <line x1="0" y1="0" x2="0" y2="6" stroke="#9da9b2" stroke-width="1.5"></line>
+                    </pattern>
+                  </defs>
+
+                  <rect class="flow-stage-background" x="8" y="8" width="1464" height="634" rx="24"></rect>
+                  <text class="flow-overline" x="28" y="37">DualWAM Asynchronous Distributed Deployment</text>
+                  <text class="flow-hardware" x="1452" y="37" text-anchor="end">3 × NVIDIA GEFORCE RTX 4090</text>
+
+                  <g class="flow-source-card" filter="url(#flow-shadow)">
+                    <rect x="28" y="72" width="230" height="80" rx="15"></rect>
+                    <text class="flow-source-label flow-blue-text" x="48" y="98">SYSTEM 2 INPUT</text>
+                    <text class="flow-source-value" x="48" y="126">Task Language Instruction</text>
+                  </g>
+                  <g class="flow-source-card" filter="url(#flow-shadow)">
+                    <rect x="28" y="176" width="230" height="112" rx="15"></rect>
+                    <text class="flow-source-label flow-blue-text" x="48" y="202">SYSTEM 2 INPUT</text>
+                    <text class="flow-source-value" x="48" y="230">Global Observation</text>
+                    <text class="flow-source-value" x="48" y="256">Robot State</text>
+                    <text class="flow-source-rate flow-blue-text" x="238" y="274" text-anchor="end">1 Hz</text>
+                  </g>
+                  <g class="flow-source-card" filter="url(#flow-shadow)">
+                    <rect x="28" y="438" width="230" height="116" rx="15"></rect>
+                    <text class="flow-source-label flow-orange-text" x="48" y="464">SYSTEM 1 INPUT</text>
+                    <text class="flow-source-value" x="48" y="492">Latest Wrist View</text>
+                    <text class="flow-source-value" x="48" y="518">Latest Robot State</text>
+                    <text class="flow-source-rate flow-orange-text" x="238" y="538" text-anchor="end">15 Hz</text>
+                  </g>
+
+                  <path class="flow-line flow-line-blue" d="M258 112 H306"></path>
+                  <path class="flow-line flow-line-blue" d="M258 232 H306"></path>
+                  <path class="flow-line flow-line-orange" d="M258 496 H306"></path>
+                  <circle class="flow-source-dot flow-source-dot-blue" cx="262" cy="112" r="3.6" data-source-dot="language"></circle>
+                  <circle class="flow-source-dot flow-source-dot-blue" cx="262" cy="232" r="3.6" data-source-dot="global"></circle>
+                  <circle class="flow-source-dot flow-source-dot-orange" cx="262" cy="496" r="3.6" data-source-dot="local"></circle>
+
+                  <g transform="translate(240 24) scale(.82)">
+                    <g filter="url(#flow-shadow)">
+                      <rect class="flow-system-two-card" x="80" y="50" width="1080" height="310" rx="24"></rect>
+                    </g>
+                    <text class="flow-system-name flow-system-name-blue" x="112" y="91">SYSTEM 2</text>
+                    <text class="flow-system-title" x="112" y="122">Global planning</text>
+                    <g class="flow-pill flow-pill-blue">
+                      <rect x="882" y="76" width="92" height="34" rx="17"></rect>
+                      <text x="928" y="98" text-anchor="middle">2 GPUs</text>
+                    </g>
+                    <g class="flow-pill flow-pill-blue">
+                      <rect x="984" y="76" width="144" height="34" rx="17"></rect>
+                      <text x="1056" y="98" text-anchor="middle">1 Hz · 32 actions</text>
+                    </g>
+
+                    <g aria-hidden="true">
+                      <path class="flow-current-route-path" d="M334 184 V386" data-current-route="0"></path>
+                      <path class="flow-current-route-path" d="M478 184 V386" data-current-route="1"></path>
+                      <path class="flow-current-route-path" d="M622 184 V386" data-current-route="2"></path>
+                      <circle class="flow-current-route-dot" cx="334" cy="190" r="3.6" data-current-route-dot="0"></circle>
+                      <circle class="flow-current-route-dot" cx="478" cy="190" r="3.6" data-current-route-dot="1"></circle>
+                      <circle class="flow-current-route-dot" cx="622" cy="190" r="3.6" data-current-route-dot="2"></circle>
+                    </g>
+
+                    <text class="flow-row-label flow-row-label-blue" x="120" y="151">CURRENT PLAN · GLOBAL OUTPUT</text>
+                    <g data-current-cells></g>
+                    <path class="flow-chunk-divider" d="M262 157 V193 M406 157 V193"></path>
+                    <path class="flow-refresh-boundary" d="M550 157 V283" data-refresh-boundary></path>
+                    <rect class="flow-overlap-region" x="544" y="148" width="156" height="158" rx="12" data-overlap-region></rect>
+                    <path class="flow-overlap-link" d="M622 194 V249" data-overlap-link></path>
+                    <g class="flow-overlap-badge" data-overlap-badge>
+                      <rect x="562" y="213" width="120" height="24" rx="12"></rect>
+                      <text x="622" y="229" text-anchor="middle">SAME TIME WINDOW</text>
+                    </g>
+                    <g aria-hidden="true">
+                      <rect class="flow-caption-mask" x="140" y="193" width="100" height="18" rx="5" data-current-caption-mask="0"></rect>
+                      <rect class="flow-caption-mask" x="304" y="193" width="60" height="18" rx="5" data-current-caption-mask="1"></rect>
+                      <rect class="flow-caption-mask" x="448" y="193" width="60" height="18" rx="5" data-current-caption-mask="2"></rect>
+                      <rect class="flow-caption-mask" x="592" y="193" width="60" height="18" rx="5" data-current-caption-mask="3"></rect>
+                    </g>
+                    <g>
+                      <text class="flow-chunk-caption" x="190" y="207" text-anchor="middle" data-current-caption="0">Chunk 1 · skipped</text>
+                      <text class="flow-chunk-caption" x="334" y="207" text-anchor="middle" data-current-caption="1">Chunk 2</text>
+                      <text class="flow-chunk-caption" x="478" y="207" text-anchor="middle" data-current-caption="2">Chunk 3</text>
+                      <text class="flow-chunk-caption" x="622" y="207" text-anchor="middle" data-current-caption="3">Chunk 4</text>
+                    </g>
+
+                    <text class="flow-row-label flow-row-label-blue" x="120" y="241">NEXT PLAN · ASYNC REFRESH</text>
+                    <g data-next-cells></g>
+                    <path class="flow-chunk-divider" d="M694 247 V283 M838 247 V283 M982 247 V283"></path>
+                    <g aria-hidden="true">
+                      <path class="flow-next-route-path" d="M766 287 V386" data-next-route="0"></path>
+                      <path class="flow-next-route-path" d="M910 287 V386" data-next-route="1"></path>
+                      <path class="flow-next-route-path" d="M1054 287 V386" data-next-route="2"></path>
+                      <circle class="flow-next-route-dot" cx="766" cy="292" r="3.84" data-next-route-dot="0"></circle>
+                      <circle class="flow-next-route-dot" cx="910" cy="292" r="3.84" data-next-route-dot="1"></circle>
+                      <circle class="flow-next-route-dot" cx="1054" cy="292" r="3.84" data-next-route-dot="2"></circle>
+                    </g>
+                    <g aria-hidden="true">
+                      <rect class="flow-caption-mask" x="592" y="283" width="60" height="18" rx="5" data-next-caption-mask="0"></rect>
+                      <rect class="flow-caption-mask" x="736" y="283" width="60" height="18" rx="5" data-next-caption-mask="1"></rect>
+                      <rect class="flow-caption-mask" x="880" y="283" width="60" height="18" rx="5" data-next-caption-mask="2"></rect>
+                      <rect class="flow-caption-mask" x="1024" y="283" width="60" height="18" rx="5" data-next-caption-mask="3"></rect>
+                    </g>
+                    <g>
+                      <text class="flow-chunk-caption" x="622" y="297" text-anchor="middle" data-next-caption="0">Chunk 1</text>
+                      <text class="flow-chunk-caption" x="766" y="297" text-anchor="middle" data-next-caption="1">Chunk 2</text>
+                      <text class="flow-chunk-caption" x="910" y="297" text-anchor="middle" data-next-caption="2">Chunk 3</text>
+                      <text class="flow-chunk-caption" x="1054" y="297" text-anchor="middle" data-next-caption="3">Chunk 4</text>
+                    </g>
+                    <g class="flow-skip-badge" data-skip-badge>
+                      <rect x="556" y="310" width="132" height="25" rx="12.5"></rect>
+                      <text x="622" y="327" text-anchor="middle">OVERLAPPED · SKIPPED</text>
+                    </g>
+                    <g>
+                      <path class="flow-refresh-connector" d="M550 157 V149 H846" data-refresh-connector></path>
+                      <text class="flow-refresh-label" x="846" y="134">BACKGROUND REFRESH</text>
+                      <rect class="flow-refresh-track" x="846" y="143" width="282" height="12" rx="6"></rect>
+                      <rect class="flow-refresh-progress" x="846" y="143" width="0" height="12" rx="6" data-refresh-progress></rect>
+                    </g>
+
+                    <g filter="url(#flow-shadow)">
+                      <rect class="flow-bridge-card" x="300" y="390" width="830" height="84" rx="20" data-bridge-card></rect>
+                    </g>
+                    <text class="flow-cache-title" x="330" y="430">Asynchronous Handoff</text>
+                    <text class="flow-cache-detail" x="330" y="453">Temporal alignment</text>
+                    <g class="flow-bridge-summary">
+                      <rect x="841" y="411" width="256" height="34" rx="17"></rect>
+                      <text x="969" y="432" text-anchor="middle" data-bridge-summary>ALIGN EXECUTED-ACTION INDEX</text>
+                    </g>
+
+                    <path class="flow-output-route" d="M910 474 V520" data-output-route></path>
+                    <circle class="flow-output-route-dot" cx="910" cy="474" r="3.6" data-output-route-dot></circle>
+
+                    <g filter="url(#flow-shadow)">
+                      <rect class="flow-system-one-card" x="80" y="520" width="1080" height="150" rx="24"></rect>
+                    </g>
+                    <text class="flow-system-name flow-system-name-orange" x="112" y="557">SYSTEM 1</text>
+                    <text class="flow-system-title" x="112" y="588">Wrist-conditioned local refinement</text>
+                    <text class="flow-cache-detail" x="112" y="614">Denoise one temporally valid 8-action chunk per update</text>
+                    <g class="flow-pill flow-pill-orange">
+                      <rect x="112" y="626" width="82" height="30" rx="15"></rect>
+                      <text x="153" y="645" text-anchor="middle">1 GPU</text>
+                    </g>
+                    <g class="flow-pill flow-pill-orange">
+                      <rect x="204" y="626" width="126" height="30" rx="15"></rect>
+                      <text x="267" y="645" text-anchor="middle">15 Hz · 63 ms</text>
+                    </g>
+
+                    <text class="flow-row-label flow-system-name-orange" x="910" y="553" text-anchor="middle" data-local-plan-label>CURRENT PLAN · CHUNK 2</text>
+                    <g data-local-cells></g>
+                    <text class="flow-execution-note" x="910" y="621" text-anchor="middle">one 8-action chunk per update</text>
+                    <text class="flow-cache-detail" x="910" y="648" text-anchor="middle" data-local-execution-detail>current-plan Chunk 2 executes in System 1</text>
+                  </g>
+
+                  <path class="flow-line flow-line-orange" d="M1191 512 H1224"></path>
+                  <circle class="flow-source-dot flow-source-dot-orange" cx="1193" cy="512" r="3.6" data-source-dot="output"></circle>
+                  <g class="flow-output-card" filter="url(#flow-shadow)">
+                    <rect x="1224" y="448" width="226" height="128" rx="18"></rect>
+                    <text class="flow-source-label flow-orange-text" x="1248" y="480">ROBOT EXECUTION</text>
+                    <text class="flow-output-title" x="1248" y="512">Refined chunk</text>
+                    <text class="flow-output-value" x="1248" y="542">8 actions</text>
+                    <text class="flow-output-detail" x="1248" y="562">execute · observe · refine</text>
+                  </g>
+                  <path class="flow-feedback-line" d="M1337 576 V614 H143 V554"></path>
+                  <text class="flow-feedback-label" x="740" y="630" text-anchor="middle">physical feedback returns immediately to the 15 Hz local loop</text>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="async-flow-legend" aria-hidden="true">
+            <span><i class="legend-dot legend-dot-blue"></i><strong>System 2</strong> publishes one complete 32-action plan at 1 Hz</span>
+            <span><i class="legend-skip"></i>the first 8 temporally overlapped actions are skipped</span>
+            <span><i class="legend-dot legend-dot-orange"></i><strong>System 1</strong> denoises one aligned 8-action chunk per update</span>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="section" id="results">
+      <div class="wide-shell">
+        <div class="section-heading reveal">
+          <p class="section-index">03 / EVALUATION</p>
+          <h2 class="results-title">Results on Real-World Tasks</h2>
+        </div>
+
+        <h3 class="subsection-title reveal">Zero-shot Real-World Tasks</h3>
+
+        <div class="gallery-grid">
+          <figure class="figure-card gallery-card reveal">
+            <div class="figure-label"><span>Franka FR3</span><small>10 unseen tasks</small></div>
+            <img src="./media/fig/franka_task_gallery.png" alt="Initial configurations for ten zero-shot Franka manipulation tasks" width="2160" height="1026" loading="lazy">
+            <figcaption>The Franka suite emphasizes diverse single-arm manipulation, including object discovery, relational matching, tool use, and spatial reorientation.</figcaption>
+          </figure>
+
+          <figure class="figure-card gallery-card reveal">
+            <div class="figure-label"><span>Galbot G1</span><small>10 unseen tasks</small></div>
+            <img src="./media/fig/galbot_task_gallery.png" alt="Initial configurations for ten zero-shot Galbot manipulation tasks" width="2160" height="1026" loading="lazy">
+            <figcaption>The Galbot suite emphasizes bimanual and contact-rich behaviors, including tool use, pouring, sweeping, untying, and articulated-object manipulation.</figcaption>
+          </figure>
+        </div>
+
+        <figure class="figure-card results-card reveal">
+          <div class="figure-label"><span>Performance overview</span><small>Success rate · completion time · latency</small></div>
+          <img src="./media/fig/main_results.png" alt="Zero-shot real-robot success rate, completion time, and critical-path latency results" width="5093" height="1296" loading="lazy">
+          <figcaption><strong>Zero-shot real-robot performance and critical-path latency.</strong> DualWAM displays strong generalization ability in real-world zero-shot tasks, achieving a relatively high success rate with significantly lower latency than all baseline families. Right: Critical-path latency on a logarithmic scale. DualWAM runs on three NVIDIA GeForce RTX 4090 GPUs, whereas each baseline method runs on a single RTX 4090 GPU.</figcaption>
+        </figure>
+
+        <div class="performance-demo reveal">
+          <h3>Performance Demonstration</h3>
+          <h4 class="more-tasks-title">More zero-shot tasks</h4>
+          <div class="performance-demo-grid">
+            <figure class="demo-card">
+              <figcaption>Clean the laptop with a brush.</figcaption>
+              <div class="demo-video-frame">
+                <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="Clean the laptop with a brush">
+                  <source src="./media/video/franka-demo/dualwam-clean-laptop-with-brush.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+                <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+              </div>
+            </figure>
+
+            <figure class="demo-card">
+              <figcaption>Elevate the cube to the highest platform.</figcaption>
+              <div class="demo-video-frame">
+                <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="Elevate the cube to the highest platform">
+                  <source src="./media/video/franka-demo/dualwam-elevate-cube-to-highest-platform.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+                <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+              </div>
+            </figure>
+
+            <figure class="demo-card">
+              <figcaption>Hook the cup onto the rack.</figcaption>
+              <div class="demo-video-frame">
+                <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="Hook the cup onto the rack">
+                  <source src="./media/video/franka-demo/dualwam-hook-cup-onto-rack.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+                <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+              </div>
+            </figure>
+
+            <figure class="demo-card">
+              <figcaption>Toss the burger in the pan.</figcaption>
+              <div class="demo-video-frame">
+                <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="Toss the burger in the pan">
+                  <source src="./media/video/franka-demo/dualwam-toss-burger-in-pan.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+                <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+              </div>
+            </figure>
+
+          </div>
+
+          <div class="galbot-demo-grid">
+            <figure class="galbot-demo-card">
+              <figcaption class="galbot-demo-prompt">Untie the ribbon on the gift.</figcaption>
+              <div class="galbot-video-frame">
+                <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="Untie the ribbon on the gift">
+                  <source src="./media/video/galbot-demo/dualwam-untie-gift-ribbon.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+                <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+              </div>
+            </figure>
+
+            <figure class="galbot-demo-card">
+              <figcaption class="galbot-demo-prompt">Remove the hat from the hook.</figcaption>
+              <div class="galbot-video-frame">
+                <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="Remove the hat from the hook">
+                  <source src="./media/video/galbot-demo/dualwam-remove-hat-from-hook.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+                <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+              </div>
+            </figure>
+
+            <figure class="galbot-demo-card">
+              <figcaption class="galbot-demo-prompt">Close the laptop.</figcaption>
+              <div class="galbot-video-frame">
+                <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="Close the laptop">
+                  <source src="./media/video/galbot-demo/dualwam-close-laptop.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+                <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+              </div>
+            </figure>
+
+            <figure class="galbot-demo-card">
+              <figcaption class="galbot-demo-prompt">Open the lower drawer of the cooker.</figcaption>
+              <div class="galbot-video-frame">
+                <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="Open the lower drawer of the cooker">
+                  <source src="./media/video/galbot-demo/dualwam-open-lower-cooker-drawer.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+                <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+              </div>
+            </figure>
+
+            <figure class="galbot-demo-card">
+              <figcaption class="galbot-demo-prompt">Hit the block with the hammer.</figcaption>
+              <div class="galbot-video-frame">
+                <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="Hit the block with the hammer">
+                  <source src="./media/video/galbot-demo/dualwam-hit-block-with-hammer.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+                <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+              </div>
+            </figure>
+
+            <figure class="galbot-demo-card">
+              <figcaption class="galbot-demo-prompt">Put the toy pig into the corresponding plate based on its color.</figcaption>
+              <div class="galbot-video-frame">
+                <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="Put the toy pig into the corresponding plate based on its color">
+                  <source src="./media/video/galbot-demo/dualwam-put-toy-pig-on-matching-color-plate.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+                <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+              </div>
+            </figure>
+          </div>
+
+          <div class="policy-comparison-list">
+            <article class="comparison-card">
+              <h4>Better zero-shot generalization</h4>
+              <div class="comparison-stack" data-sync-replay>
+                <figure class="comparison-result">
+                  <figcaption>
+                    <span class="comparison-prompt">Orient the mug with its handle pointing to the pot.</span>
+                    <span class="comparison-policy">π0.5 <span class="policy-status policy-status-fail" aria-label="Failure">✗</span></span>
+                  </figcaption>
+                  <div class="comparison-video-frame comparison-video-frame-right-view">
+                    <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="Pi 0.5 policy orienting the mug">
+                      <source src="./media/video/franka-demo/better-zero-shot-generalization/pi05-orient-mug-handle-to-pot.mp4" type="video/mp4">
+                      Your browser does not support the video tag.
+                    </video>
+                    <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+                  </div>
+                </figure>
+
+                <figure class="comparison-result">
+                  <figcaption>
+                    <span class="comparison-prompt">Orient the mug with its handle pointing to the pot.</span>
+                    <span class="comparison-policy">DualWAM <span class="policy-status policy-status-success" aria-label="Success">✓</span></span>
+                  </figcaption>
+                  <div class="comparison-video-frame">
+                    <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="DualWAM orienting the mug">
+                      <source src="./media/video/franka-demo/better-zero-shot-generalization/dualwam-orient-mug-handle-to-pot.mp4" type="video/mp4">
+                      Your browser does not support the video tag.
+                    </video>
+                    <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+                  </div>
+                </figure>
+              </div>
+            </article>
+
+            <article class="comparison-card">
+              <h4>Faster execution responsiveness</h4>
+              <div class="comparison-stack" data-sync-replay>
+                <figure class="comparison-result">
+                  <figcaption>
+                    <span class="comparison-prompt">Extract the straw from the cup.</span>
+                    <span class="comparison-policy">Cosmos-Nano <span class="policy-status policy-status-fail" aria-label="Failure">✗</span></span>
+                  </figcaption>
+                  <div class="comparison-video-frame">
+                    <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="Cosmos-Nano extracting the straw">
+                      <source src="./media/video/franka-demo/faster-execution-responsiveness/cosmos-nano-extract-straw-from-cup.mp4" type="video/mp4">
+                      Your browser does not support the video tag.
+                    </video>
+                    <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+                  </div>
+                </figure>
+
+                <figure class="comparison-result">
+                  <figcaption>
+                    <span class="comparison-prompt">Extract the straw from the cup.</span>
+                    <span class="comparison-policy">DualWAM <span class="policy-status policy-status-success" aria-label="Success">✓</span></span>
+                  </figcaption>
+                  <div class="comparison-video-frame">
+                    <video loop muted playsinline controls preload="metadata" data-demo-video aria-label="DualWAM extracting the straw">
+                      <source src="./media/video/franka-demo/faster-execution-responsiveness/dualwam-extract-straw-from-cup.mp4" type="video/mp4">
+                      Your browser does not support the video tag.
+                    </video>
+                    <span class="playback-badge" aria-label="Playback speed: 1×">1×</span>
+                  </div>
+                </figure>
+              </div>
+            </article>
+
+            <article class="comparison-card">
+              <h4>Fine manipulation via wrist-guided refinement</h4>
+              <div class="comparison-stack" data-sync-replay>
+                <figure class="comparison-result">
+                  <figcaption>
+                    <span class="comparison-prompt">Open the top drawer.</span>
+                    <span class="comparison-policy">Cosmos-Nano <span class="policy-status policy-status-fail" aria-label="Failure">✗</span></span>
+                  </figcaption>
+                  <div class="comparison-video-frame comparison-video-frame-right-view">
+                    <video loop muted playsinline controls preload="metadata" data-demo-video data-playback-rate="2" aria-label="Cosmos-Nano opening the top drawer">
+                      <source src="./media/video/franka-demo/fine-manipulation-via-wrist-guided-refinement/cosmos-nano-open-top-drawer.mp4" type="video/mp4">
+                      Your browser does not support the video tag.
+                    </video>
+                    <span class="playback-badge" aria-label="Playback speed: 2×">2×</span>
+                  </div>
+                </figure>
+
+                <figure class="comparison-result">
+                  <figcaption>
+                    <span class="comparison-prompt">Open the top drawer.</span>
+                    <span class="comparison-policy">DualWAM <span class="policy-status policy-status-success" aria-label="Success">✓</span></span>
+                  </figcaption>
+                  <div class="comparison-video-frame comparison-video-frame-right-view">
+                    <video loop muted playsinline controls preload="metadata" data-demo-video data-playback-rate="2" aria-label="DualWAM opening the top drawer in different manners">
+                      <source src="./media/video/franka-demo/fine-manipulation-via-wrist-guided-refinement/dualwam-open-top-drawer.mp4" type="video/mp4">
+                      Your browser does not support the video tag.
+                    </video>
+                    <span class="playback-badge" aria-label="Playback speed: 2×">2×</span>
+                  </div>
+                </figure>
+              </div>
+            </article>
+
+            <article class="comparison-card">
+              <h4>Adaptive interaction strategies under unexpected conditions</h4>
+              <p class="comparison-caption"><strong><em>Leveraging the model’s strong generalization capabilities, our policy can explore multiple interaction approaches to address the sudden problem in exceptional cases.</em></strong></p>
+              <div class="comparison-stack">
+                <figure class="comparison-result">
+                  <figcaption>
+                    <span class="comparison-prompt">Extract the straw from the cup.</span>
+                    <span class="comparison-policy">DualWAM <span class="policy-status policy-status-success" aria-label="Success">✓</span></span>
+                  </figcaption>
+                  <div class="comparison-video-frame">
+                    <video loop muted playsinline controls preload="metadata" data-demo-video data-playback-rate="2" aria-label="DualWAM quickly correcting an abnormal situation">
+                      <source src="./media/video/franka-demo/adaptive-interaction-strategies-under-unexpected-conditions/dualwam-fast-closed-loop-correction.mp4" type="video/mp4">
+                      Your browser does not support the video tag.
+                    </video>
+                    <span class="playback-badge" aria-label="Playback speed: 2×">2×</span>
+                  </div>
+                </figure>
+
+                <figure class="comparison-result">
+                  <figcaption>
+                    <span class="comparison-prompt">Reveal the object under the green cup.</span>
+                    <span class="comparison-policy">DualWAM <span class="policy-status policy-status-success" aria-label="Success">✓</span></span>
+                  </figcaption>
+                  <div class="comparison-video-frame">
+                    <video loop muted playsinline controls preload="metadata" data-demo-video data-playback-rate="2" aria-label="DualWAM revealing an object through repeated interactions">
+                      <source src="./media/video/franka-demo/adaptive-interaction-strategies-under-unexpected-conditions/dualwam-reveal-object-under-green-cup.mp4" type="video/mp4">
+                      Your browser does not support the video tag.
+                    </video>
+                    <span class="playback-badge" aria-label="Playback speed: 2×">2×</span>
+                  </div>
+                </figure>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tinted" id="bibtex">
+      <div class="content-shell">
+        <div class="section-heading reveal">
+          <p class="section-index">04 / CITATION</p>
+          <h2>BibTeX</h2>
+        </div>
+
+        <div class="citation-card reveal">
+          <button class="copy-button" type="button" data-copy-bibtex aria-label="Copy BibTeX citation">
+            <span class="copy-ready">Copy</span>
+            <span class="copy-done" aria-live="polite">Copied</span>
+          </button>
+          <pre><code id="bibtex-code">@misc{zheng2026dualwam,
+  title   = {DualWAM: Dual-System World Action Models for
+             Asynchronous Global Planning and Local Refinement},
+  author  = {Zheng, Yixin and Lyu, Jiangran and Deng, Yuntian and
+             Liu, Kai and Zhou, Yizhou and Wang, Yizhou and
+             Zhao, Xiaoguang and Wang, He and Zhang, Zhizheng},
+  year    = {2026}
+}</code></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="content-shell footer-inner">
+      <div class="footer-brand"><span class="title-dual">Dual</span><span class="title-wam">WAM</span></div>
+      <p>Website design adapted from the <a href="https://github.com/nerfies/nerfies.github.io" target="_blank" rel="noopener noreferrer">NeRFies</a> template.</p>
+    </div>
+  </footer>
+</body>
+
+</html>
